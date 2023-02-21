@@ -97,6 +97,8 @@ async function _newUserLogin(i, bars, screenShot = true) {
 
   //const goToDiscussionButton = await page.$('#root > div.container-fluid > div.row.justify-content-center > div > div.mt-4 > button');
   //await goToDiscussionButton.click();
+  // LOGS CONTENT OF THE PAGE
+  console.log(await page.content());
   const getStartedButton = await page.$('.getStartedButton');
   await getStartedButton.evaluate( getStartedButton => getStartedButton.click() );
   console.log(chalk.yellow("Entering into the discussion for user ", i));
@@ -160,11 +162,11 @@ async function runExperiment() {
     const x = base + step * interval;
     const numParticipants = parseInt(_stdNormalDistribution(x) * numUsers);
     const runAtSinceStart = startTs + step * 500;
-    //console.log(chalk.cyan(`Running ${numParticipants} at ts ${new Date(runAtSinceStart).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
+    console.log(chalk.cyan(`Running ${numParticipants} at ts ${new Date(runAtSinceStart).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
     for (let i = idx; i < idx + numParticipants; ++i) {
       promises.push((async () => {
         await _sleep(runAtSinceStart - Date.now());
-        //console.log(chalk.green(`Running ${i} at ts ${new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
+        console.log(chalk.green(`Running ${i} at ts ${new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
         await _newUserLogin(i, bars).catch((error) => {
           console.log("await ERROR");
           console.error(error);
