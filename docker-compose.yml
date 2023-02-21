@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  puppeteer:
+    build:
+      context: .
+      dockerfile: ./puppeteer/Dockerfile    
+    volumes:
+    # mount code and output directories into the container
+      - ./output:/app/output
+      - ./puppeteer:/app/puppeteer
+    working_dir: /app/puppeteer
+    shm_size: 1gb # 512M

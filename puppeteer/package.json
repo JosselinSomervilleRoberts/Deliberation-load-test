@@ -1,0 +1,20 @@
+{
+  "name": "server-capacity-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server_capacity.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "christine1729",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "cli-progress": "^3.11.2",
+    "multi-progress": "^4.0.0",
+    "multi-progress-bars": "^5.0.3",
+    "puppeteer": "^8.0.0",
+    "twilio": "^3.50.0",
+    "twilio-video": "^2.7.3"
+  }
+}
