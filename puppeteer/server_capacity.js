@@ -1,12 +1,20 @@
 "use strict";
 
+const yargs = require('yargs');
 const chalk = require('chalk');
 const puppeteer = require('puppeteer');
 const Multiprogress = require('multi-progress');
 const { AssetVersionContext } = require('twilio/lib/rest/serverless/v1/service/asset/assetVersion');
 process.setMaxListeners(0);
 
-const numUsers = 5;
+
+const argv = yargs
+  .option('use_logs', {
+    default: false,
+    describe: 'Rather to use logs or progress bars'
+  }).argv;
+
+const numUsers = 6;
 const testDuration = 40000;
 const delayToEnterRoom = 3000;
 const delayBeforeScreenshot = 5000;
@@ -71,66 +79,88 @@ async function _newUserLogin(i, bars, screenShot = true) {
   const page = await context.newPage();
   let browserOpen = true;
   page.on("pageerror", (error) => {
-    console.log(chalk.red("Error in page:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"}), "\n:", error));
+    if (argv.use_logs) console.log(chalk.red("Error in page:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"}), "\n:", error));
     browser.close();
     browserOpen = false;
-    bars["crashed"].tick();
-    //console.log(chalk.red("Error in page:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"}), "\n:", error));
+    if (!argv.use_logs) bars["crashed"].tick();
   });
   await page.setDefaultNavigationTimeout(0);
-  bars["started"].tick();
+  if (!argv.use_logs) bars["started"].tick();
 
   // Currently test w/o auto-assignment
   await page.goto(`https://stanforddeliberate.org/${roomNames[i % numRooms]}`);
   // Logs content of the page
   await page.content();
-  await page.type('#username', `test_user_ec${i}@gmail.com`);
-  await page.type('#fullName', `test_user_ec${i}`);
-  await page.type('#screenName', `test_user_ec${i}`);
-  console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+  await page.type('#username', `test_user_ec2_${i}@gmail.com`);
+  await page.type('#fullName', `test_user_ec2_${i}`);
+  await page.type('#screenName', `user_ec2_${i}`);
+  if (argv.use_logs) console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
 
-  console.log("Waiting for login button...");
+  // Finds the login button and clicks it
+  await page.content();
   const loginButton = await page.$('input[type="submit"]');
-  console.log("Got login button");
-  // Clicks on the login button
-  await loginButton.evaluate( loginButton => loginButton.click() );
-  //await Promise.all([page.waitForNavigation(), loginButton.click()]);
+  await loginButton.click();
+  await _sleep(3000);
 
-  console.log(chalk.cyan("Logged in for user ", i));
-  bars["logged"].tick();
+  // Makes sure there was no error
+  await page.content();
+  let error = await page.evaluate(() => {
+    let el = document.querySelector(".text-danger")
+    return el ? el.innerText : ""
+  })
+  if (error !== "") {
+    if (argv.use_logs) console.log(chalk.red("Log in error:", error, " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+    browser.close();
+    browserOpen = false;
+    if (!argv.use_logs) bars["crashed"].tick();
+    return;
+  }
 
-  //const goToDiscussionButton = await page.$('#root > div.container-fluid > div.row.justify-content-center > div > div.mt-4 > button');
-  //await goToDiscussionButton.click();
-  // LOGS CONTENT OF THE PAGE
-  console.log("Waiting for get started button...");
+  // If we are here, we are logged in
+  if (argv.use_logs) console.log(chalk.cyan("Logged in for user ", i));
+  if (!argv.use_logs) bars["logged"].tick();
+
+  // Finds the get started button and clicks it
+  await page.content();
   const getStartedButton = await page.$('.getStartedButton');
-  console.log("Got get started button");
   await getStartedButton.evaluate( getStartedButton => getStartedButton.click() );
-  console.log(chalk.yellow("Entering into the discussion for user ", i));
-  bars["entering"].tick();
-  //console.log(await page.content());
 
+  // Waits for the discussion to load
+  if (argv.use_logs) console.log(chalk.yellow("Entering into the discussion for user ", i));
+  if (!argv.use_logs) bars["entering"].tick();
   await _sleep(delayToEnterRoom);
-  if (!browserOpen) return;
-  console.log("Waiting for enter discussion button...");
-  const enterDiscussionButton = await page.waitForSelector('#root > p:nth-child(4) > button');
-  console.log("Got enter discussion button");
-  await enterDiscussionButton.evaluate( enterDiscussionButton => enterDiscussionButton.click() );
-  // await page.waitForSelector('#root > p:nth-child(4) > button', {timeout: 1200000});
-  // await page.click('#root > p:nth-child(4) > button');
+  if (!browserOpen) return; // The browser crashed
 
-  console.log(chalk.blue("New Page URL starting discussion:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
-  bars["inRoom"].tick();
+  // Makes sure there was no error
+  await page.content();
+  error = await page.evaluate(() => {
+    let el = document.querySelector(".text-danger")
+    return el ? el.innerText : ""
+  })
+  if (error !== "") {
+    if (argv.use_logs) console.log(chalk.red("Log in error:", error, " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+    browser.close();
+    browserOpen = false;
+    if (!argv.use_logs) bars["crashed"].tick();
+    return;
+  }
+
+  // If we are here, we can enter the discussion
+  const enterDiscussionButton = await page.waitForSelector('#root > p:nth-child(4) > button');
+  await enterDiscussionButton.evaluate( enterDiscussionButton => enterDiscussionButton.click() );
+
+  if (argv.use_logs) console.log(chalk.blue("New Page URL starting discussion:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+  if (!argv.use_logs) bars["inRoom"].tick();
   await _sleep(delayBeforeScreenshot);
   if (screenShot) {
     await page.screenshot({ path: `../output/browser${i}.png` });
-    bars["screenshot"].tick();
+    if (!argv.use_logs) bars["screenshot"].tick();
   }
   await _sleep(Math.max(testDuration - delayBeforeScreenshot, 1));
-  console.log(chalk.blue(`New Page URL opening discussion after ${testDuration / 60000} min:`, page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+  if (argv.use_logs) console.log(chalk.blue(`New Page URL opening discussion after ${testDuration / 60000} min:`, page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
   // // Close browser session
   await browser.close();
-  bars["finished"].tick();
+  if (!argv.use_logs) bars["finished"].tick();
 }
 
 async function runExperiment() {
@@ -161,7 +191,7 @@ async function runExperiment() {
   const barScreenShot = mpb.newBar(chalk.greenBright('Screenshots taken [:bar] :percent'), { total: nbTotalParticipants });
   const bars = {"created": barCreated, "started": barStarted, "logged": barLogged, "entering": barEntering, "inRoom": barInRoom, "crashed": barCrashed, "finished": barFinished, "screenshot": barScreenShot};
   for (let i = 0; i < bars.length; ++i) {
-    bars[i].tick(0);
+    if (!argv.use_logs) bars[i].tick(0);
   }
 
   let idx = getRandomInt(0, 99999);
@@ -169,11 +199,11 @@ async function runExperiment() {
     const x = base + step * interval;
     const numParticipants = parseInt(_stdNormalDistribution(x) * numUsers);
     const runAtSinceStart = startTs + step * 500;
-    console.log(chalk.cyan(`Running ${numParticipants} at ts ${new Date(runAtSinceStart).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
+    if (argv.use_logs) console.log(chalk.cyan(`Running ${numParticipants} at ts ${new Date(runAtSinceStart).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
     for (let i = idx; i < idx + numParticipants; ++i) {
       promises.push((async () => {
         await _sleep(runAtSinceStart - Date.now());
-        console.log(chalk.green(`Running ${i} at ts ${new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
+        if (argv.use_logs) console.log(chalk.green(`Running ${i} at ts ${new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
         await _newUserLogin(i, bars).catch((error) => {
           console.log("await ERROR");
           console.error(error);
