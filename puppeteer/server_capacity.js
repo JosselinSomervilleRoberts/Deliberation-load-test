@@ -89,8 +89,9 @@ async function _newUserLogin(i, bars, screenShot = true) {
   await page.type('#screenName', `test_user_ec${i}`);
   console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
 
-  console.log(await page.content());
+  console.log("Waiting for login button...");
   const loginButton = await page.$('input[type="submit"]');
+  console.log("Got login button");
   await Promise.all([page.waitForNavigation(), loginButton.click()]);
 
   console.log(chalk.cyan("Logged in for user ", i));
@@ -99,8 +100,9 @@ async function _newUserLogin(i, bars, screenShot = true) {
   //const goToDiscussionButton = await page.$('#root > div.container-fluid > div.row.justify-content-center > div > div.mt-4 > button');
   //await goToDiscussionButton.click();
   // LOGS CONTENT OF THE PAGE
-  console.log(await page.content());
+  console.log("Waiting for get started button...");
   const getStartedButton = await page.$('.getStartedButton');
+  console.log("Got get started button");
   await getStartedButton.evaluate( getStartedButton => getStartedButton.click() );
   console.log(chalk.yellow("Entering into the discussion for user ", i));
   bars["entering"].tick();
@@ -108,7 +110,9 @@ async function _newUserLogin(i, bars, screenShot = true) {
 
   await _sleep(delayToEnterRoom);
   if (!browserOpen) return;
+  console.log("Waiting for enter discussion button...");
   const enterDiscussionButton = await page.waitForSelector('#root > p:nth-child(4) > button');
+  console.log("Got enter discussion button");
   await enterDiscussionButton.evaluate( enterDiscussionButton => enterDiscussionButton.click() );
   // await page.waitForSelector('#root > p:nth-child(4) > button', {timeout: 1200000});
   // await page.click('#root > p:nth-child(4) > button');
