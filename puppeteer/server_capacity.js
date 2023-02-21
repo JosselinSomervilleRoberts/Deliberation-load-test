@@ -89,10 +89,11 @@ async function _newUserLogin(i, bars, screenShot = true) {
   await page.type('#screenName', `test_user_ec${i}`);
   console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
 
+  console.log(await page.content());
   const loginButton = await page.$('input[type="submit"]');
   await Promise.all([page.waitForNavigation(), loginButton.click()]);
 
-  console.log(chalk.cyan("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+  console.log(chalk.cyan("Logged in for user ", i));
   bars["logged"].tick();
 
   //const goToDiscussionButton = await page.$('#root > div.container-fluid > div.row.justify-content-center > div > div.mt-4 > button');
