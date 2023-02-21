@@ -71,6 +71,7 @@ async function _newUserLogin(i, bars, screenShot = true) {
   const page = await context.newPage();
   let browserOpen = true;
   page.on("pageerror", (error) => {
+    console.log(chalk.red("Error in page:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"}), "\n:", error));
     browser.close();
     browserOpen = false;
     bars["crashed"].tick();
@@ -86,18 +87,19 @@ async function _newUserLogin(i, bars, screenShot = true) {
   await page.type('#username', `test_user_ec${i}@gmail.com`);
   await page.type('#fullName', `test_user_ec${i}`);
   await page.type('#screenName', `test_user_ec${i}`);
+  console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
 
   const loginButton = await page.$('input[type="submit"]');
   await Promise.all([page.waitForNavigation(), loginButton.click()]);
 
-  //console.log(chalk.cyan("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+  console.log(chalk.cyan("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
   bars["logged"].tick();
 
   //const goToDiscussionButton = await page.$('#root > div.container-fluid > div.row.justify-content-center > div > div.mt-4 > button');
   //await goToDiscussionButton.click();
   const getStartedButton = await page.$('.getStartedButton');
   await getStartedButton.evaluate( getStartedButton => getStartedButton.click() );
-  //console.log(chalk.yellow("Entering into the discussion for user ", i));
+  console.log(chalk.yellow("Entering into the discussion for user ", i));
   bars["entering"].tick();
   //console.log(await page.content());
 
@@ -108,7 +110,7 @@ async function _newUserLogin(i, bars, screenShot = true) {
   // await page.waitForSelector('#root > p:nth-child(4) > button', {timeout: 1200000});
   // await page.click('#root > p:nth-child(4) > button');
 
-  //console.log(chalk.blue("New Page URL starting discussion:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+  console.log(chalk.blue("New Page URL starting discussion:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
   bars["inRoom"].tick();
   await _sleep(delayBeforeScreenshot);
   if (screenShot) {
@@ -116,7 +118,7 @@ async function _newUserLogin(i, bars, screenShot = true) {
     bars["screenshot"].tick();
   }
   await _sleep(Math.max(testDuration - delayBeforeScreenshot, 1));
-  //console.log(chalk.blue(`New Page URL opening discussion after ${testDuration / 60000} min:`, page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
+  console.log(chalk.blue(`New Page URL opening discussion after ${testDuration / 60000} min:`, page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
   // // Close browser session
   await browser.close();
   bars["finished"].tick();

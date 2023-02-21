@@ -8,15 +8,24 @@ import os
 import numpy as np
 import sys
 sys.path.append('../../')
-import config
+import configparser
 import time
 
+config = configparser.ConfigParser()
+config.read('config.ini')
+
 def get_ec2_resource(region_name="us-east-1"):
-    ec2_resource = boto3.resource("ec2", region_name=region_name, aws_access_key_id=ACCESS_ID, aws_secret_access_key=ACCESS_KEY)
+    ec2_resource = boto3.resource("ec2",
+                                    region_name=region_name,
+                                    aws_access_key_id=config['AWS']['ACCESS_KEY'],
+                                    aws_secret_access_key=config['AWS']['SECRET_KEY'])
     return ec2_resource
 
 def get_ec2_client(region_name="us-east-1"):
-    ec2_client = boto3.client("ec2", region_name=region_name, aws_access_key_id=ACCESS_ID, aws_secret_access_key=ACCESS_KEY)
+    ec2_client = boto3.client("ec2",
+                                region_name=region_name,
+                                aws_access_key_id=config['AWS']['ACCESS_KEY'],
+                                aws_secret_access_key=config['AWS']['SECRET_KEY'])
     return ec2_client
 
 def create_key_pair_if_not_exists(key_name="ec2-key-pair", region_name="us-east-1"):
@@ -92,42 +101,33 @@ file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(stdout_handler)
 
-# Secrets
-ACCESS_ID = "AKIA35YPCFVF4GEOS5HH"
-ACCESS_KEY = "wxgzv0JZ4FIPC9RBo+/B6m7nwucxCN7lUH8jBzwB"
-GIT_ACCESS_TOKEN = "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"
 
 # ec2 module loading
-region = "us-west-1"
+region = config["AWS"]["REGION"]
 ec2 = get_ec2_resource(region_name=region)
 client = get_ec2_client(region_name=region)
 
-key_name = "ec2-key-pair-joss"
+key_name = config["AWS_EC2"]["KEY_NAME"]
 key_path = create_key_pair_if_not_exists(key_name=key_name, region_name=region)
 cur_dir = os.getcwd()
 key_loc = cur_dir + '\\' + key_path
 print("key_loc: ", key_loc)
-
-# adjust dir
-if 'capacity' not in cur_dir:
-    new_dir = cur_dir + '/capacity'   
-    os.chdir(new_dir)
 
 # test param setting
 # TODO: change to flags in cmd line
 NUM_INSTANCES = 2
 
 # create instances
-instances = ec2.create_instances(ImageId='ami-0d382e80be7ffdae5',#'ami-065bb5126e4504910',
-                                InstanceType='t2.2xlarge',
+instances = ec2.create_instances(ImageId=config["AWS_EC2"]["AMI"],
+                                InstanceType=config["AWS_EC2"]["INSTANCE_TYPE"],
                                 KeyName=key_name,
                                 MinCount=1, 
                                 MaxCount=NUM_INSTANCES,
                                 Monitoring={
                                     'Enabled': True
                                 },
-                                SubnetId='subnet-073aafcf763786871',
-                                SecurityGroupIds=['sg-015c4ff429e35d1cf'],
+                                SubnetId=config["AWS_EC2"]["SUBNET_ID"],
+                                SecurityGroupIds=[config["AWS_EC2"]["SECURITY_GROUP_ID"]],
                                )
 
 logging.info(instances)
@@ -161,7 +161,7 @@ print("")
 # logging.info(response_start)
 
 # generate shell script for each test instance
-try:
+if True:
     for i, instance_id in enumerate(instance_ids):
         res = client.describe_instances(InstanceIds=[instance_id])
         ip_addresses = get_public_ip(instance_id, region_name=region)
@@ -169,23 +169,20 @@ try:
         if ip_address is None:
             logging.error("No IP address found for instance:", instance_id)
             continue
-        f = open(f"test{i}.sh", "a")
+        f = open(f"test{i}.sh", "w")
         with open("run_test.sh", "r") as rt:
             lines = rt.readlines()
+            to_replace = [["[IP-ADDRESS]", ip_address],
+                            ["[KEY-LOCATION]", key_loc],
+                            ["[GITHUB-TOKEN]", config["GITHUB"]["TOKEN"]],
+                            ["[GITHUB-USER]", config["GITHUB"]["USER_NAME"]],
+                            ["[GITHUB-REPO]", config["GITHUB"]["REPO_NAME"]]]
             for line in lines:
-                ip = 'ip-address'
-                key_location = "key-location"
-                mask = '[dp-test-access-token]'
-                if mask in line:
-                    line = line.replace(mask, GIT_ACCESS_TOKEN)
-                if ip in line:
-                    line = line.replace(ip, ip_address)
-                if key_location in line:
-                    line = line.replace(key_location, key_loc)
+                for replace in to_replace:
+                    if replace[0] in line:
+                        line = line.replace(replace[0], replace[1])
                 f.write(line)
         f.close()
-except Exception as e:
-    logging.error(e) 
 
 
 # # ------------------------------------ end test -------------------------------------------

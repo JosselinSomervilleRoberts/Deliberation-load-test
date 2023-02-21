@@ -1,9 +1,9 @@
 #!/bin/bash
 echo -e "### connecting to the ec2 instance ###"
-ssh ubuntu@ip-address -i 'key-location' -o StrictHostKeyChecking=no '
+ssh ubuntu@[IP-ADDRESS] -i '[KEY-LOCATION]' -o StrictHostKeyChecking=no '
 echo -e "### git clone the repo... ###";
-git clone https://[dp-test-access-token]@github.com/christine1729/dp-test.git;
-cd dp-test/capacity/puppeteer;
+git clone https://[GITHUB-TOKEN]@github.com/[GITHUB-USER]/[GITHUB-REPO].git load_tester;
+cd load_tester/puppeteer;
 echo -e "### resolve dependencies ###";
 sudo apt-get update;
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y install nodejs;

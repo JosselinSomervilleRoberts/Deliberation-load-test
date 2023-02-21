@@ -3,3 +3,4 @@ output
 *.pem
 *.log
 test*.sh
+config.ini
