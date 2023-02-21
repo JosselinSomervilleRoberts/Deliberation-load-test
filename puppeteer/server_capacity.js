@@ -93,7 +93,7 @@ async function _newUserLogin(i, bars, screenShot = true) {
   await page.content();
   await page.type('#username', `test_user_ec2_${i}@gmail.com`);
   await page.type('#fullName', `test_user_ec2_${i}`);
-  await page.type('#screenName', `user_ec2_${i}`);
+  await page.type('#screenName', `user-ec2-${i}`);
   if (argv.use_logs) console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
 
   // Finds the login button and clicks it
