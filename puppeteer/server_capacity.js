@@ -92,7 +92,9 @@ async function _newUserLogin(i, bars, screenShot = true) {
   console.log("Waiting for login button...");
   const loginButton = await page.$('input[type="submit"]');
   console.log("Got login button");
-  await Promise.all([page.waitForNavigation(), loginButton.click()]);
+  // Clicks on the login button
+  loginButton.click();
+  //await Promise.all([page.waitForNavigation(), loginButton.click()]);
 
   console.log(chalk.cyan("Logged in for user ", i));
   bars["logged"].tick();
