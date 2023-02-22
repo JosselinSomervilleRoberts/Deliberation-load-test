@@ -1,0 +1,14 @@
+{
+    "room_groups": [
+        {
+            "name": "demo-joss",
+            "num_rooms": 1
+        },
+        {
+            "name": "demo-joss-2",
+            "num_rooms": 3
+        }
+    ],
+    "num_users_per_room": 10,
+    "test_duration": 120000
+}

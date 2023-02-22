@@ -4,3 +4,6 @@ output
 *.log
 test*.sh
 config.ini
+ips.json
+params.json
+*pyc
