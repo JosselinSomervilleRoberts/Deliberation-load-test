@@ -41,6 +41,10 @@ const argv = yargs
     default: 1,
     describe: 'Number of rooms in room group'
   })
+  .option('default_timeout', {
+    default: 300000,
+    describe: 'Timeout for each page'
+  })
   .option('take_screenshot', {
     default: false,
     describe: 'Whether to take screenshots or not'
@@ -55,6 +59,7 @@ const delayBetweenParticipants = argv.delay_between_participants;
 const roomGroupName = argv.room_group_name;
 const numRooms = argv.num_rooms;
 const takeScreenshot = argv.take_screenshot;
+const default_timeout = argv.default_timeout;
 
 // Simulate gaussian distribution
 const intervalRangeInMin = 15;
@@ -119,31 +124,32 @@ async function _newUserLogin(i, bars) {
     browserOpen = false;
     if (!useLogs) bars["crashed"].tick();
   });
-  await page.setDefaultNavigationTimeout(0);
+  await page.setDefaultNavigationTimeout(default_timeout);
   if (!useLogs) bars["started"].tick();
 
   // Currently test w/o auto-assignment
   await page.goto(`https://stanforddeliberate.org/${roomNames[i % numRooms]}`, {
     waitUntil: 'networkidle0',
+    timeout: default_timeout
   });
   // Logs content of the page
   await page.content();
-  await page.waitForSelector('#username');
-  await page.waitForSelector('#fullName');
-  await page.waitForSelector('#screenName');
+  await page.waitForSelector('#username' , { timeout: default_timeout });
+  await page.waitForSelector('#fullName' , { timeout: default_timeout });
+  await page.waitForSelector('#screenName' , { timeout: default_timeout });
   await page.type('#username', `test_user_ec2_${i}@gmail.com`);
   await page.type('#fullName', `test_user_ec2_${i}`);
   await page.type('#screenName', `user-ec2-${i}`);
   if (useLogs) console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
 
   // Finds the login button and clicks it
-  await page.waitForSelector('input[type="submit"]');
+  await page.waitForSelector('input[type="submit"]' , { timeout: default_timeout });
   const loginButton = await page.$('input[type="submit"]');
   await loginButton.click();
   //await _sleep(20000);
 
   // Makes sure there was no error
-  await page.waitForNavigation({waitUntil: 'networkidle2'})
+  await page.waitForNavigation({waitUntil: 'networkidle2', timeout: default_timeout });
   await page.content();
   let error = await page.evaluate(() => {
     let el = document.querySelector(".text-danger")
@@ -158,7 +164,7 @@ async function _newUserLogin(i, bars) {
   }
 
   // If we are here, we are logged in
-  await page.waitForSelector('.getStartedButton');
+  await page.waitForSelector('.getStartedButton' , { timeout: default_timeout });
   if (useLogs) console.log(chalk.cyan("Logged in for user ", i));
   if (!useLogs) bars["logged"].tick();
 
