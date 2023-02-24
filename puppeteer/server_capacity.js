@@ -121,7 +121,7 @@ async function _newUserLogin(i, bars) {
   await page.goto(`https://stanforddeliberate.org/${roomNames[i % numRooms]}`);
   // Logs content of the page
   await page.content();
-  await _sleep(20000);
+  //await _sleep(20000);
   await page.type('#username', `test_user_ec2_${i}@gmail.com`);
   await page.type('#fullName', `test_user_ec2_${i}`);
   await page.type('#screenName', `user-ec2-${i}`);
@@ -131,7 +131,7 @@ async function _newUserLogin(i, bars) {
   await page.content();
   const loginButton = await page.$('input[type="submit"]');
   await loginButton.click();
-  await _sleep(20000);
+  //await _sleep(20000);
 
   // Makes sure there was no error
   await page.content();
@@ -153,7 +153,7 @@ async function _newUserLogin(i, bars) {
 
   // Finds the get started button and clicks it
   await page.content();
-  await _sleep(20000);
+  //await _sleep(20000);
   const getStartedButton = await page.$('.getStartedButton');
   await getStartedButton.evaluate( getStartedButton => getStartedButton.click() );
 
@@ -165,7 +165,7 @@ async function _newUserLogin(i, bars) {
 
   // Makes sure there was no error
   await page.content();
-  await _sleep(20000);
+  //await _sleep(20000);
   error = await page.evaluate(() => {
     let el = document.querySelector(".text-danger")
     return el ? el.innerText : ""
@@ -245,7 +245,7 @@ async function runExperiment() {
   for (let step = 0; step <= intervalRangeInMin; ++step) {
     const x = base + step * interval;
     const numParticipants = parseInt(_stdNormalDistribution(x) * numUsers);
-    const runAtSinceStart = startTs + step * 3000;
+    const runAtSinceStart = startTs + step * 500;
     if (useLogs) console.log(chalk.cyan(`Running ${numParticipants} at ts ${new Date(runAtSinceStart).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
     for (let i = idx; i < idx + numParticipants; ++i) {
       promises.push((async () => {
