@@ -153,6 +153,8 @@ async function _newUserLogin(i, bars) {
 
   // Finds the get started button and clicks it
   await page.content();
+  console.log("page content: ", await page.content());
+  console.log("\n\n");
   //await _sleep(20000);
   const getStartedButton = await page.$('.getStartedButton');
   await getStartedButton.evaluate( getStartedButton => getStartedButton.click() );
