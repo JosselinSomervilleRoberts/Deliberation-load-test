@@ -42,7 +42,7 @@ const argv = yargs
     describe: 'Number of rooms in room group'
   })
   .option('default_timeout', {
-    default: 300000,
+    default: 7200000,
     describe: 'Timeout for each page'
   })
   .option('take_screenshot', {
