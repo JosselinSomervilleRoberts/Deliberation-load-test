@@ -10,5 +10,8 @@
         }
     ],
     "num_users_per_room": 10,
-    "test_duration": 120000
+    "test_duration": 120000,
+    "delay_between_participants": 1000,
+    "delay_to_enter_room": 3000
+
 }

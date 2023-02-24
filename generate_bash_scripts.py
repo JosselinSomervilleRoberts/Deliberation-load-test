@@ -42,7 +42,9 @@ for i, instance_id in enumerate(instance_ips):
                         ["[NUM-OF-USERS]", str(params["num_users_per_room"] * params["room_groups"][i]["num_rooms"])],
                         ["[ROOM-GROUP-NAME]", params["room_groups"][i]["name"]],
                         ["[NUM-OF-ROOMS]", str(params["room_groups"][i]["num_rooms"])],
-                        ["[TEST-DURATION]", str(params["test_duration"])]]
+                        ["[TEST-DURATION]", str(params["test_duration"])],
+                        ["[DELAY-BETWEEN-PARTICIPANTS]", str(params["delay_between_participants"])],
+                        ["[DELAY-TO-ENTER-ROOM]", str(params["delay_to_enter_room"])]]
         for line in lines:
             for replace in to_replace:
                 if replace[0] in line:

@@ -29,6 +29,10 @@ const argv = yargs
     default: 5000,
     describe: 'Delay before screenshot in milliseconds'
   })
+  .option('delay_between_participants', {
+    default: 500,
+    describe: 'Delay before each login in milliseconds'
+  })
   .option('room_group_name', {
     default: 'demo-joss',
     describe: 'Room group name'
@@ -47,6 +51,7 @@ const numUsers = argv.num_users;
 const testDuration = argv.test_duration;
 const delayToEnterRoom = argv.delay_to_enter_room;
 const delayBeforeScreenshot = argv.delay_before_screenshot;
+const delayBetweenParticipants = argv.delay_between_participants;
 const roomGroupName = argv.room_group_name;
 const numRooms = argv.num_rooms;
 const takeScreenshot = argv.take_screenshot;
@@ -118,22 +123,24 @@ async function _newUserLogin(i, bars) {
   if (!useLogs) bars["started"].tick();
 
   // Currently test w/o auto-assignment
-  await page.goto(`https://stanforddeliberate.org/${roomNames[i % numRooms]}`);
+  await page.goto(`https://stanforddeliberate.org/${roomNames[i % numRooms]}`, {
+    waitUntil: 'networkidle0',
+  });
   // Logs content of the page
   await page.content();
-  //await _sleep(20000);
   await page.type('#username', `test_user_ec2_${i}@gmail.com`);
   await page.type('#fullName', `test_user_ec2_${i}`);
   await page.type('#screenName', `user-ec2-${i}`);
   if (useLogs) console.log(chalk.green("New Page URL:", page.url(), " user: ", i, " timestamp: ", new Date(Date.now()).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})));
 
   // Finds the login button and clicks it
-  await page.content();
+  await page.waitForSelector('input[type="submit"]');
   const loginButton = await page.$('input[type="submit"]');
   await loginButton.click();
   //await _sleep(20000);
 
   // Makes sure there was no error
+  await page.waitForNavigation({waitUntil: 'networkidle2'})
   await page.content();
   let error = await page.evaluate(() => {
     let el = document.querySelector(".text-danger")
@@ -148,13 +155,14 @@ async function _newUserLogin(i, bars) {
   }
 
   // If we are here, we are logged in
+  await page.waitForSelector('.getStartedButton');
   if (useLogs) console.log(chalk.cyan("Logged in for user ", i));
   if (!useLogs) bars["logged"].tick();
 
   // Finds the get started button and clicks it
-  await page.content();
-  console.log("page content: ", await page.content());
-  console.log("\n\n");
+  // await page.content();
+  // console.log("page content: ", await page.content());
+  // console.log("\n\n");
   //await _sleep(20000);
   const getStartedButton = await page.$('.getStartedButton');
   await getStartedButton.evaluate( getStartedButton => getStartedButton.click() );
@@ -247,7 +255,7 @@ async function runExperiment() {
   for (let step = 0; step <= intervalRangeInMin; ++step) {
     const x = base + step * interval;
     const numParticipants = parseInt(_stdNormalDistribution(x) * numUsers);
-    const runAtSinceStart = startTs + step * 500;
+    const runAtSinceStart = startTs + step * delayBetweenParticipants;
     if (useLogs) console.log(chalk.cyan(`Running ${numParticipants} at ts ${new Date(runAtSinceStart).toLocaleString(undefined, {dateStyle: "short", timeStyle: "long"})}`));
     for (let i = idx; i < idx + numParticipants; ++i) {
       promises.push((async () => {
