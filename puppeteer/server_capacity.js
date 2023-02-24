@@ -128,6 +128,9 @@ async function _newUserLogin(i, bars) {
   });
   // Logs content of the page
   await page.content();
+  await page.waitForSelector('#username');
+  await page.waitForSelector('#fullName');
+  await page.waitForSelector('#screenName');
   await page.type('#username', `test_user_ec2_${i}@gmail.com`);
   await page.type('#fullName', `test_user_ec2_${i}`);
   await page.type('#screenName', `user-ec2-${i}`);
